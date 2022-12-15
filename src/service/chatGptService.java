@@ -18,7 +18,7 @@ import org.json.JSONObject;
 import com.sun.tools.javac.Main;
 
 public class chatGptService {
-	public static String getApiData(String userInput) throws IOException {
+	public static String getApiData(String question) throws IOException {
 
 		HttpClient client = HttpClient.newHttpClient();
 		HttpRequest request = HttpRequest.newBuilder().uri(URI.create("https://jsonplaceholder.typicode.com/users"))
