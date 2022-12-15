@@ -10,47 +10,38 @@ import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.HashMap;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 import com.sun.tools.javac.Main;
 
 public class chatGptService {
-	private static HttpURLConnection connection;
-
-	public static void main(String[] args) throws IOException {
-		// BufferedReader reader;
-		// String line;
-		// StringBuffer responseContent = new StringBuffer();
-		//
-		// URL url = new URL("https://jsonplaceholder.typicode.com/posts");
-		// connection = (HttpURLConnection) url.openConnection();
-		// connection.setRequestMethod("GET");
-		// connection.setConnectTimeout(5000);
-		// connection.setReadTimeout(5000);
-		// int status = connection.getResponseCode();
-		// System.out.println(status);
-		//
-		// reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-		// while((line = reader.readLine())!=null){
-		// 	responseContent.append(line);
-		// }
-		// reader.close();
-		// System.out.println(responseContent.toString());
-		// connection.disconnect();
+	public static String getApiData(String userInput) throws IOException {
 
 		HttpClient client = HttpClient.newHttpClient();
-		HttpRequest request = HttpRequest.newBuilder().uri(URI.create("https://jsonplaceholder.typicode.com/posts")).build();
+		HttpRequest request = HttpRequest.newBuilder().uri(URI.create("https://jsonplaceholder.typicode.com/users"))
+			.GET()
+			// .POST(HttpRequest.BodyPublishers.ofString("{\"action\":\"hello\"}"))
+			.header("X-Naver-Client-Id","text/plain")
+			.header("authorization","Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Ik1UaEVOVUpHTkVNMVFURTRNMEZCTWpkQ05UZzVNRFUxUlRVd1FVSkRNRU13UmtGRVFrRXpSZyJ9.eyJodHRwczovL2FwaS5vcGVuYWkuY29tL3Byb2ZpbGUiOnsiZW1haWwiOiJtYXNjb2Vza2ltQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJnZW9pcF9jb3VudHJ5IjoiS1IifSwiaHR0cHM6Ly9hcGkub3BlbmFpLmNvbS9hdXRoIjp7InVzZXJfaWQiOiJ1c2VyLVdSbHZmbERaenE0ODhoNkJxd0doQlN5WSJ9LCJpc3MiOiJodHRwczovL2F1dGgwLm9wZW5haS5jb20vIiwic3ViIjoiZ29vZ2xlLW9hdXRoMnwxMDY3MTI1NjcyMjU5OTE5ODgzMzYiLCJhdWQiOlsiaHR0cHM6Ly9hcGkub3BlbmFpLmNvbS92MSIsImh0dHBzOi8vb3BlbmFpLmF1dGgwLmNvbS91c2VyaW5mbyJdLCJpYXQiOjE2NzEwNjQ0NDQsImV4cCI6MTY3MTEwNzY0NCwiYXpwIjoiVGRKSWNiZTE2V29USHROOTVueXl3aDVFNHlPbzZJdEciLCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIG1vZGVsLnJlYWQgbW9kZWwucmVxdWVzdCBvcmdhbml6YXRpb24ucmVhZCBvZmZsaW5lX2FjY2VzcyJ9.sOqxVJjZ-q_LA6caQwS1ZxVJJeM_-FqHFtHv8KtNJESUj_Yz1phlzwIrO0kCOx45vPJoIVBOxE5ddp9-SH7n29g1Wxg3mddBrV8pXhVCDiYzmL6o16ASS6cKb-1UipBttycIF1QRp8lu4rMiV5VrX89mCspb5BKHbqOIiFe5GZmfSLkq1w0m4pnacBfiRMGVbhc3_5iPOJMd5ySqq_LEDz1vgeH8bKfiBWvHEsQn-fClsRlOGo0UzHeWeFxRgUaoFNK8RVCg1Uvbgskm072x-6cEhpBiurKVms9Dubx4VObbLxFc8zIEoNwktMXKgEcBZr1H7eenvBuU-oBnKkgOEw")
+			.header("content-type","application/json")
+			.header("cookie","_ga=GA1.2.213019781.1670570474; intercom-device-id-dgkjq2bp=448438ad-b13e-4a9d-868b-008ec225b569; intercom-session-dgkjq2bp=bnhYZDdHKzVJc2ltVTl2SVFSdWtMZjJzRWhWeStFTDBxb1IyZUZmQkQ0eFlaUGtEMytFYWJoZ3hWRmZFMGJTKy0tUVY0SE9jMUdLemZ1UXllNjEzM3YxQT09--2dabe439de54788fb6bc84ae02e6a6b74d73b2d2; _gid=GA1.2.2029602753.1671064429; cf_clearance=o0xM5Z90gS2F6dzHylkqGv9pffqLi0ctFXFD44CqdtY-1671064432-0-1-d4cfdde9.c20c5a0a.8e59c969-160; __Host-next-auth.csrf-token=be6ed96e2606a0e8581fe5c2164d702f880798835fd6c57bd7312742d98cc9a5%7Cb60c061dd14acc5fec6f57da073c82d06d78316746e3f6b9c0888e2b05ab8fbf; __cf_bm=kDAAyWTb6pudkJz8mj.S1RtKlgGgYLEtWsMz89UmBbQ-1671064433-0-AfcCaZlg/GthVwtJZtlfde56+sP9DJVOkj+XLqPgdiKgfSfc0BSWiwmyY8vCENMqUDtzgQnKAvWbfXJhl1CkLVInnoXHRXQkZKB9CMNLJiwht9shFPyzfy60QrUnDxSz0JmizFpnDmvjNvgU3UHFbKAug2QI+kGXfv0pjRgbvlQjdb/0zYyRBT7kUPsHEs1kyg==; __Secure-next-auth.callback-url=https%3A%2F%2Fchat.openai.com%2Fchat; __Secure-next-auth.session-token=eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2R0NNIn0..0qw2lcADK4BygHJl.MsQwR5E2YJe6B-bQwRv2Qdde4V6ndD6pWN3b929cv9MWWz7w_FxqOzOvecGBzNXweqQxxFoavyDF55O-pyXHt3m-R4DstQ3pz77QMWS19Pa6KMxI91YMaK184sSOp2MFNn2cV6sPEIZgvSZ4fhDTB4EsZuvnA68ESLM-HWudJfEWDxng2rrDKTNsvQ7MwGNbpftKsOawLfEn2Ii_06KSd3pTB0KNu9JRdTkwEhtINE_eyjlhW4r9augCoRxdCMHQu60Rds2kkhEXvS7tmLZkVWqKEnN00wX8LfjIkSqN-JL7eGL08VfeoZDBoF34rKaqKeJMyyIg9ggWvAgE2srh9vKwjkVfHLATmUuLw4qdz-BtXFC1bBOcMGKSsAfZpDk57MU_uY_UyBG6dvpK_A0-Di9UN2M8af-S3QVCp8vC-xu5aAKWujNUY-HwfMmrLPjWVcI4-gahqn8MFtGfLGkK4k-4nQp-ghUgthcfp3z9TeG-KHzzTk4F3Un6pA86fDAdbtVcFLn4rNs6wGVIErRNATiMGeMBjiPzjxrAJfZMTY9Am0icy0bi-DdnR6C-r4COd9ELKITSsWezu7SbRMl8jubQDMDhE570wHYMBflXTmfupiK8tPUAN7qWewxgl0jSpqdD_cBMHJp5P4RBZcDWsxRZDRLn-wf9x2qohcTCcW8HnUMNrBkMIXhgQfI1iR5Q43fviQBap1wj29-P6Djigh8rIl2k7XYktXVNONg0diu6uxsucrGls3fS1VeT8VZdhHfmTc1YQuSgtkIFJKMLAIvmqe2G0KrhB9EXEZCg-llD4m4LZ0_CEhvx9CJbBPOEGVmrg8Kjv6eue8kC1Ku7PFHK-AAwZtOuSqFq4OOTVkB2_SDboB7jkw_kructVHMDMV4ENxQC1DsWKLu0zyaaF8MNGhHJrLj_vedG0qqeJmJtPphDU69MRzHN4ndlI-ON1naoKpZah1IdpLzIgtgfcy3LB-mCtKwc8DZX7Dr9svxyOVwJiPRu5qxyhYpDQ3MUx26EZEbgLmKgN5t6HbKUNgjy8NZdfa-DpJEtdyN8tmxh5EuSB4dZvhzZhIDEv-Kaq9hE7IhLkLCC7qA9fCJHIv1f-tYxUfvcX9dROVDFq3NW5QgCY0WHMrJ8vYHQ_p11z_dsdE1atxN2djyl5ZBYQ7LGC0pSt0q8w9NnakppZdu9Q8Rb-etvQnIYAjpRzL-vc1c0cgSrNVXP2iTC2eb5Ciy0DNytYwWWFjUc8jQAFFj2kPvBzq_ncsxYomioCdLHEu4-rP7s3qdrnP0TBiJIJgVVn5sP_g75_tY3ZC2o9qifUQTjgVbXvMZCYIUqxvrHZhl9pk0hwyNPitHe22ffUl-fQpvq7U7tXDQCa3dahnSvzy57sjjx0mhug1_uB-5IivjFtqrB7IsdC7zVrGeK0hPNPC4UETRyDSg97ziJQkqG36t6WlG5qkCxKzMXTFSGUnlGr67srSLGSK39N5Ns-m-Vd5LQ_Wn8bBIzMEqcn8P2lnXJAVT1qUEjZKt1awASw2-ITQAGS27NPcDYd2VudJcKy57uYxEUQ6DNTjryRdwv-rQVHo1YT85HSwuPPWTX703TCRukZ7CDiNdalQW9zyxO2Fz63RSLyG8blIwYNw7FZza9XFKXHvdTXko4CM8CiNtqaTgiZA0-9akeYODuym79R_Jzc_GURFZ57HomZqVd36m5viFdf3zRCz3DO4xrXBcxdebkOfkxgHxrzQ-WaruMQG72e92L9m2h8ihPl_bCme_GMVRlYwKbeaysIlgqJ6e92MhQ3b3GOP3tLV26nvQ4frqSI6tiXf_Jmzo8Iwd5x_r54RiF_oiFbOf5VdLBQjfTHC4MrcdpGgPtfrkNtmQ4klY0NCFhL9sJhs9Vos8wTcF0hnNILnY0UZTzRkGrMYhJtz4UVUBOfFPUscMB3BkCQTaN2DBT7Vw64bMBp2z_fgyM1MCgX2OL0QE13doPGAYzVy2rU-_rdVo5TRcHi8K06p6g_aVDLIEdw2ZIZ0wMW_vxNLZny7aY4rvK0PbxqYQe2p36KgN9tSYQLyldqE_vLQNaxc76wlMTFGWckQVDXc5a-_FKdX97SvkN0SXm0OAGfGWMOMtcaGiWOPrqyOAruu_ovqiVjkOJfRTO59KS8Xc86wHZFHJsnTtNWQsQpRTyXhnUx-qdQnV4AZbhdvRs51V-1XZ0V9Bws1GzjHADlASzsPqO5uTxwbAR7zyeUiSlZxFD.A4645eqPA56qn2GGQDr1PA")
+			.build();
 
-		client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+		String result = client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
 		.thenApply(HttpResponse::body)
+			// .thenAccept(System.out::println)
 			.thenApply(chatGptService::parse)
 			.join();
+		return result;
+
 
 	}
 	public static String parse(String responseBody){
 		JSONArray posts = new JSONArray(responseBody);
-		System.out.println(posts.get(0).toString());
-		return posts.get(0).toString();
+		JSONObject post = new JSONObject(posts.get(0).toString());
+		return post.getString("website");
 	}
 }
